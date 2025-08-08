@@ -33,6 +33,14 @@ playd shutdown
 npm install -g playd
 ```
 
+## Claude Code
+
+Press `#` in Claude Code (or similar) and paste this line to store playd usage instructions:
+
+```
+Information about `playd` command: it controls Chrome via CDP; create session: `playd session create browser1 --headed` (other commands use last session by default); navigate: `playd goto URL`; interact: `playd click ".selector"`, `playd type "text"` or `playd type "text" --selector ".input"`, `playd type "text" --clear` (clears first), `playd fill ".selector" "text"`, `playd press "Enter"`; wait: `playd wait-for ".selector"`; extract: `playd text`, `playd dom`, `playd attr ".selector" "href"` (html attr, not current value!); AI questions: `playd llm "question"` (analyzes title+text) or `playd llm "question" --on-html` (analyzes full HTML); run JS: `playd eval "code"`; capture: `playd screenshot`; cookies: `playd cookie-get <name>`, `playd cookie-set <name> <value> [--domain <domain>] [--path <path>]`; storage: `playd storage [--export file.json] [--import file.json]`; `playd session close browser1`; `playd wait-for "textarea[name='q']"`; `playd help`; `playd shutdown` (closes all sessions) `npm install -g playd` if not installed
+```
+
 ## CLI Overview
 
 ### Sessions
