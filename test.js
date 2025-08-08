@@ -179,10 +179,10 @@ async function main() {
     }
 
     try {
-      // Navigate to httpbin.org (reliable testing service)
-      const gotoResult = await runner.runCommand(["goto", "https://httpbin.org/html", "--session", "integration-test"]);
+      // Navigate to playd documentation site
+      const gotoResult = await runner.runCommand(["goto", "https://slava-vishnyakov.github.io/playd/", "--session", "integration-test"]);
       if (!gotoResult.stdout.includes('"ok":true')) {
-        throw new Error("Failed to navigate to httpbin");
+        throw new Error("Failed to navigate to playd site");
       }
 
       // Wait for page content to load
@@ -191,10 +191,10 @@ async function main() {
       // Give page extra time to fully render
       await runner.runCommand(["sleep", "1000", "--session", "integration-test"]);
       
-      // Check page content loaded (httpbin.org/html contains Herman Melville text)
-      const contentResult = await runner.runCommand(["eval", "document.body.textContent.includes('Herman Melville')", "--session", "integration-test"]);
+      // Check page content loaded (playd site contains Claude Code text)
+      const contentResult = await runner.runCommand(["eval", "document.body.textContent.includes('Claude Code')", "--session", "integration-test"]);
       if (!contentResult.stdout.includes("true")) {
-        throw new Error(`Expected page to contain 'Herman Melville', got: ${contentResult.stdout}`);
+        throw new Error(`Expected page to contain 'Claude Code', got: ${contentResult.stdout}`);
       }
 
       // Take a screenshot to verify page loaded
