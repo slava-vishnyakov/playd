@@ -114,7 +114,7 @@ function defaultSocketPath() {
 }
 
 function defaultPipeNameWin() {
-  return "\\.\pipe\playd"; // Windows named pipe
+  return "\\\\.\\pipe\\playd"; // Windows named pipe
 }
 
 function getEndpoint(flags) {
@@ -124,9 +124,10 @@ function getEndpoint(flags) {
     const port = Number(flags.port || 3210);
     return { type: "tcp", host, port };
   }
-  // Otherwise prefer a local socket/pipe.
+  // Otherwise prefer a local socket/pipe, but use TCP on Windows for better CI compatibility.
   if (process.platform === "win32") {
-    return { type: "pipe", pipe: flags.socket || defaultPipeNameWin() };
+    // Use TCP on Windows for better compatibility in CI environments
+    return { type: "tcp", host: "127.0.0.1", port: 3210 };
   }
   return { type: "uds", socket: flags.socket || defaultSocketPath() };
 }
