@@ -33,15 +33,15 @@ jobs:
 
     - name: Run smoke tests
       run: node test.js
-      
+
     - name: Display Chrome version (Linux)
       if: runner.os == 'Linux'
       run: google-chrome --version || chromium --version || echo "Chrome not found"
-      
+
     - name: Display Chrome version (macOS)
       if: runner.os == 'macOS'
       run: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version || echo "Chrome not found"
-      
+
     - name: Display Chrome version (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
