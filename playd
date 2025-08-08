@@ -367,7 +367,7 @@ Usage:
 
   playd goto <url> [--session <id>] [--waitUntil load|domcontentloaded|networkidle] [--timeout 30000]
   playd click <selector> [--session <id>]
-  playd type <selector> <text> [--session <id>] [--delay 20] [--clear]
+  playd type <text> [--session <id>] [--selector <sel>] [--delay 20] [--clear]
   playd fill <selector> <text> [--session <id>]
   playd press <key> [--session <id>] [--selector <sel>]
   playd wait-for <selector> [--session <id>] [--state visible|attached|hidden|detached] [--timeout 30000]
@@ -384,7 +384,7 @@ Usage:
   playd storage [--session <id>] [--export file.json] [--import file.json]
   playd eval '<js>' [--session <id>]
   playd eval-file ./snippet.js [--session <id>]
-  playd llm '<question>' [--session <id>]
+  playd llm '<question>' [--session <id>] [--on-html]
 
   playd status
   playd shutdown
@@ -462,8 +462,9 @@ Usage:
 
     case "type": {
       const id = await needSession();
-      const selector = a1; const text = a2;
-      if (!selector || text == null) { err("Usage: playd type <selector> <text> [--delay 20] [--clear]"); process.exit(2); }
+      const selector = flags.selector || null;
+      const text = a1;
+      if (text == null) { err("Usage: playd type <text> [--selector <sel>] [--delay 20] [--clear]"); process.exit(2); }
       const delayMs = Number(flags.delay || 0);
       const clear = !!flags.clear;
       const timeout = Number(flags.timeout || 30000);
@@ -642,8 +643,9 @@ Usage:
     case "llm": {
       const id = await needSession();
       const question = rest.slice(1).join(" ");
-      if (!question) { err("Usage: playd llm '<question about the page>'"); process.exit(2); }
-      const body = await call("POST", "/llm", { id, question });
+      if (!question) { err("Usage: playd llm '<question about the page>' [--on-html]"); process.exit(2); }
+      const onHtml = !!flags["on-html"];
+      const body = await call("POST", "/llm", { id, question, onHtml });
       if (!body.ok) {
         err(`Error: ${body.error}`);
         process.exit(1);
@@ -834,11 +836,21 @@ async function serverMain(ep) {
     if (method === "POST" && url.pathname === "/click") {
       const { id, selector, timeout = 30000 } = await readJson(req);
       const s = await withSession(id);
-      // Get nodeId via DOM.querySelector
+      
       await s.cdp.send("DOM.enable");
       const doc = await s.cdp.send("DOM.getDocument", { depth: 1 });
-      const q = await s.cdp.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector });
-      if (!q.nodeId) return reply(res, 404, { ok: false, error: "selector not found" });
+      
+      // Try to find the selector, with 1-second retry if not found
+      let q = await s.cdp.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector });
+      if (!q.nodeId) {
+        serverLog(`Click selector "${selector}" not found, waiting 1 second and retrying...`);
+        await delay(1000);
+        // Refresh the DOM document in case it changed
+        const newDoc = await s.cdp.send("DOM.getDocument", { depth: 1 });
+        q = await s.cdp.send("DOM.querySelector", { nodeId: newDoc.root.nodeId, selector });
+        if (!q.nodeId) return reply(res, 404, { ok: false, error: "selector not found" });
+      }
+      
       const box = await s.cdp.send("DOM.getBoxModel", { nodeId: q.nodeId });
       const quad = box.model.content || box.model.border || box.model.margin || box.model.padding;
       const xs = [quad[0], quad[2], quad[4], quad[6]];
@@ -852,18 +864,23 @@ async function serverMain(ep) {
 
     if (method === "POST" && url.pathname === "/type") {
       const { id, selector, text, delay: d = 0, clear = false, timeout = 30000 } = await readJson(req);
+      serverLog(`/type request: id=${id}, selector=${selector}, text=${text}, delay=${d}, clear=${clear}`);
       const s = await withSession(id);
-      await s.cdp.send("DOM.enable");
-      const doc = await s.cdp.send("DOM.getDocument", { depth: 1 });
-      const q = await s.cdp.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector });
-      if (!q.nodeId) return reply(res, 404, { ok: false, error: "selector not found" });
-      await s.cdp.send("DOM.focus", { nodeId: q.nodeId });
+      
+      if (selector) {
+        // Focus on the specified selector
+        await s.cdp.send("DOM.enable");
+        const doc = await s.cdp.send("DOM.getDocument", { depth: 1 });
+        const q = await s.cdp.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector });
+        if (!q.nodeId) return reply(res, 404, { ok: false, error: "selector not found" });
+        await s.cdp.send("DOM.focus", { nodeId: q.nodeId });
+      }
+      // If no selector provided, type into currently focused element
+      
       if (clear) {
-        // Select all + backspace
-        await s.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", commands: "selectAll" });
-        await s.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", commands: "selectAll" });
-        await s.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Backspace", windowsVirtualKeyCode: 8 });
-        await s.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", windowsVirtualKeyCode: 8 });
+        // Clear field by setting value to empty using JavaScript
+        const expr = `(() => { const el = document.activeElement; if (el && ('value' in el)) { el.value = ''; el.dispatchEvent(new Event('input', {bubbles:true})); } })()`;
+        await s.cdp.send("Runtime.evaluate", { expression: expr });
       }
       for (const ch of String(text)) {
         await s.cdp.send("Input.insertText", { text: ch });
@@ -1097,7 +1114,7 @@ async function serverMain(ep) {
     }
 
     if (method === "POST" && url.pathname === "/llm") {
-      const { id, question } = await readJson(req);
+      const { id, question, onHtml = false } = await readJson(req);
       
       // Check for OpenAI API key
       const apiKey = process.env.OPENAI_API_KEY;
@@ -1107,21 +1124,62 @@ async function serverMain(ep) {
 
       const s = await withSession(id);
       
-      // Get current page HTML
-      const r = await s.cdp.send("Runtime.evaluate", { expression: "document.documentElement.outerHTML", returnByValue: true });
-      const html = r.result.value || "";
+      let content;
+      if (onHtml) {
+        // Get full HTML when --on-html flag is used
+        const r = await s.cdp.send("Runtime.evaluate", { expression: "document.documentElement.outerHTML", returnByValue: true });
+        content = r.result.value || "";
+        
+        // Proactively truncate if HTML is over 200KB
+        const maxSize = 200 * 1024; // 200KB
+        if (content.length > maxSize) {
+          serverLog(`HTML too large (${content.length} chars). Truncating to ${maxSize} chars`);
+          content = content.substring(0, maxSize);
+        }
+      } else {
+        // Default: extract title and body text
+        const titleResult = await s.cdp.send("Runtime.evaluate", { 
+          expression: "document.title || ''", 
+          returnByValue: true 
+        });
+        const bodyResult = await s.cdp.send("Runtime.evaluate", { 
+          expression: "document.body ? document.body.innerText : ''", 
+          returnByValue: true 
+        });
+        
+        const title = titleResult.result.value || "";
+        const bodyText = bodyResult.result.value || "";
+        
+        content = `Title: ${title}\n\nPage Text:\n${bodyText}`;
+        
+        // Truncate body text if too long (keeping title intact)
+        const maxSize = 200 * 1024; // 200KB
+        if (content.length > maxSize) {
+          const titlePart = `Title: ${title}\n\nPage Text:\n`;
+          const availableSpace = maxSize - titlePart.length;
+          const truncatedBody = bodyText.substring(0, availableSpace);
+          content = titlePart + truncatedBody;
+          serverLog(`Text content too large. Truncated body text to fit ${maxSize} chars`);
+        }
+      }
       
-      // Prepare the prompt
-      const prompt = `Here is the HTML of a webpage:
+      const makeRequest = async (contentToAnalyze) => {
+        const prompt = onHtml 
+          ? `Here is the HTML of a webpage:
 
-${html}
+${contentToAnalyze}
 
 Question: ${question}
 
-Please analyze the HTML and answer the question. Be concise and specific.`;
+Please analyze the HTML and answer the question. Be concise and specific.`
+          : `Here is information about a webpage:
 
-      try {
-        // Call OpenAI API
+${contentToAnalyze}
+
+Question: ${question}
+
+Please analyze the page content and answer the question. Be concise and specific.`;
+
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -1129,21 +1187,48 @@ Please analyze the HTML and answer the question. Be concise and specific.`;
             "Authorization": `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini", // Using a model that actually exists
-            messages: [
-              {
-                role: "user", 
-                content: prompt
-              }
-            ],
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: prompt }],
             max_tokens: 500,
             temperature: 0.1
           })
         });
 
+        return response;
+      };
+
+      try {
+        // First attempt with full content
+        let response = await makeRequest(content);
+
         if (!response.ok) {
           const error = await response.json();
-          return reply(res, 500, { ok: false, error: `OpenAI API error: ${error.error?.message || response.statusText}` });
+          
+          // Check if it's a token limit error
+          if (error.error?.message?.includes("maximum context length")) {
+            // Extract the max token limit and current tokens from error message
+            const match = error.error.message.match(/maximum context length is (\d+) tokens.*resulted in (\d+) tokens/);
+            if (match) {
+              const maxTokens = parseInt(match[1]);
+              const currentTokens = parseInt(match[2]);
+              
+              // Calculate how much to truncate (90% of the ratio for safety)
+              const ratio = maxTokens / currentTokens;
+              const safeRatio = ratio * 0.9;
+              const truncateLength = Math.floor(content.length * safeRatio);
+              
+              serverLog(`Token limit exceeded (${currentTokens}/${maxTokens}). Truncating content from ${content.length} to ${truncateLength} chars`);
+              
+              // Truncate content and try again
+              content = content.substring(0, truncateLength);
+              response = await makeRequest(content);
+            }
+          }
+          
+          if (!response.ok) {
+            const retryError = await response.json();
+            return reply(res, 500, { ok: false, error: `OpenAI API error: ${retryError.error?.message || response.statusText}` });
+          }
         }
 
         const data = await response.json();

@@ -116,7 +116,7 @@ playd llm "Does this page have a search input? What's its ID?"</code></pre>
     <p class="text-slate-300 mb-4">Press <kbd class="rounded bg-white/10 px-1">#</kbd> in Claude Code (or similar) and paste this line to store playd usage instructions:</p>
     <div class="relative">
         <button class="copy-btn absolute right-2 top-2 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs z-10" data-copy-target="#code-intro">Copy</button>
-        <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 pr-16 text-xs"><code id="code-intro" class="block whitespace-pre-wrap">Information about `playd` command: it controls Chrome via CDP; create session: `playd session create browser --headed` (other commands use last session by default); navigate: `playd goto URL`; interact: `playd click ".selector"`, `playd type ".selector" "text"`, `playd fill ".selector" "text"`; wait: `playd wait-for ".selector"`; extract: `playd text`, `playd dom`, `playd attr ".selector" "href"` (note that this is html attr, not current value for input!); AI questions: `playd llm "does this page have input and what is its id"`; run JS: `playd eval "code"`; capture: `playd screenshot` (outputs image, works well for claude code). If user asks you to use browser - use playd. playd dom: dumps dom. playd text. playd cookie-get &lt;name>; playd cookie-set &lt;name> &lt;value> [--domain &lt;domain>] [--path &lt;path>]; playd storage [--export file.json] [--import file.json]; playd session close browser</code></pre>
+        <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 pr-16 text-xs"><code id="code-intro" class="block whitespace-pre-wrap">Information about `playd` command: it controls Chrome via CDP; create session: `playd session create browser --headed` (other commands use last session by default); navigate: `playd goto URL`; interact: `playd click ".selector"`, `playd type ".selector" "text"`, `playd fill ".selector" "text"`; wait: `playd wait-for ".selector"`; extract: `playd text`, `playd dom`, `playd attr ".selector" "href"` (note that this is html attr, not current value for input!); AI questions: `playd llm "does this page have input and what is its id"` --on-html; (if on-html omitted - only text and title are analyzed) run JS: `playd eval "code"`; capture: `playd screenshot` (outputs image, works well for claude code). If user asks you to use browser - use playd. playd dom: dumps dom. playd text. playd cookie-get &lt;name>; playd cookie-set &lt;name> &lt;value> [--domain &lt;domain>] [--path &lt;path>]; playd storage [--export file.json] [--import file.json]; playd session close browser</code></pre>
     </div>
 </section>
 
@@ -140,34 +140,17 @@ playd session close demo
             <div class="relative mt-2">
                 <button class="copy-btn absolute right-2 top-2 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs" data-copy-target="#ex2">Copy</button>
                 <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 text-sm"><code id="ex2">
-playd session create ci-run --headless
+playd session create browser1
 playd goto https://google.com
+playd wait-for "textarea[name='q']
+playd click "textarea[name='q']
 playd type "search"
+playd press Enter
+playd llm "what is this page about, summarize in 2-3 sentences"
+playd llm "what query was used" --on-html
+playd session close browser1
 </code></pre>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- Install options -->
-<section class="mx-auto mt-12 max-w-7xl px-6" id="install">
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div class="rounded-2xl border border-white/10 bg-panel p-6">
-            <h3 class="text-lg font-semibold">Prefer a global install?</h3>
-            <p class="mt-1 text-sm text-slate-300/90">Same commands, no <code class="bg-white/10 px-1 rounded">npx</code> prefix.</p>
-            <div class="relative mt-3">
-                <button class="copy-btn absolute right-2 top-2 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs" data-copy-target="#glob">Copy</button>
-                <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 text-sm"><code id="glob">npm install -g playd
-playd --version</code></pre>
-            </div>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-panel p-6">
-            <h3 class="text-lg font-semibold">Environment</h3>
-            <ul class="mt-2 list-inside list-disc text-sm text-slate-300/90">
-                <li>Node.js <span class="rounded bg-white/10 px-1">≥ 18</span></li>
-                <li>Google Chrome / Chromium installed</li>
-                <li><code class="bg-white/10 px-1 rounded">OPENAI_API_KEY</code> set for <code class="bg-white/10 px-1 rounded">llm</code></li>
-            </ul>
         </div>
     </div>
 </section>
