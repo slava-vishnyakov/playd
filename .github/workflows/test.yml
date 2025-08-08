@@ -1,10 +1,11 @@
+---
 name: Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -14,137 +15,139 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [18, 20, 22]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Make playd executable (Unix)
-      if: runner.os != 'Windows'
-      run: chmod +x playd
+      - name: Make playd executable (Unix)
+        if: runner.os != 'Windows'
+        run: chmod +x playd
 
-    - name: Run smoke tests
-      run: node test.js
+      - name: Run smoke tests
+        run: node test.js
 
-    - name: Display Chrome version (Linux)
-      if: runner.os == 'Linux'
-      run: google-chrome --version || chromium --version || echo "Chrome not found"
+      - name: Display Chrome version (Linux)
+        if: runner.os == 'Linux'
+        run: google-chrome --version || chromium --version || echo "Chrome not found"
 
-    - name: Display Chrome version (macOS)
-      if: runner.os == 'macOS'
-      run: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version || echo "Chrome not found"
+      - name: Display Chrome version (macOS)
+        if: runner.os == 'macOS'
+        run: >
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version ||
+          echo "Chrome not found"
 
-    - name: Display Chrome version (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        if (Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe") {
-          & "C:\Program Files\Google\Chrome\Application\chrome.exe" --version
-        } else {
-          Write-Output "Chrome not found"
-        }
-
-    - name: Install Chrome (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-        sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
-
-    - name: Test Chrome detection (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        node -e "
-        const fs = require('fs');
-        function getChromePath() {
-          const linuxPaths = [
-            '/usr/bin/google-chrome',
-            '/usr/bin/google-chrome-stable',
-            '/usr/bin/chromium',
-            '/usr/bin/chromium-browser',
-            '/snap/bin/chromium',
-            '/opt/google/chrome/chrome'
-          ];
-          for (const chromePath of linuxPaths) {
-            try {
-              if (fs.existsSync(chromePath)) {
-                return chromePath;
-              }
-            } catch {}
+      - name: Display Chrome version (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe") {
+            & "C:\Program Files\Google\Chrome\Application\chrome.exe" --version
+          } else {
+            Write-Output "Chrome not found"
           }
-          return 'google-chrome';
-        }
-        console.log('Chrome path:', getChromePath());
-        console.log('Chrome exists:', fs.existsSync(getChromePath()));
-        "
 
-    - name: Test Chrome detection (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: pwsh
-      run: |
-        node -e "
-        const fs = require('fs');
-        function getChromePath() {
-          const windowsPaths = [
-            process.env.LOCALAPPDATA + '\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe',
-            process.env.PROGRAMFILES + '\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe',
-            process.env['PROGRAMFILES(X86)'] + '\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe'
-          ];
-          for (const chromeExePath of windowsPaths) {
-            try {
-              if (fs.existsSync(chromeExePath)) {
-                return chromeExePath;
-              }
-            } catch {}
+      - name: Install Chrome (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Test Chrome detection (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          node -e "
+          const fs = require('fs');
+          function getChromePath() {
+            const linuxPaths = [
+              '/usr/bin/google-chrome',
+              '/usr/bin/google-chrome-stable',
+              '/usr/bin/chromium',
+              '/usr/bin/chromium-browser',
+              '/snap/bin/chromium',
+              '/opt/google/chrome/chrome'
+            ];
+            for (const chromePath of linuxPaths) {
+              try {
+                if (fs.existsSync(chromePath)) {
+                  return chromePath;
+                }
+              } catch {}
+            }
+            return 'google-chrome';
           }
-          return 'chrome.exe';
-        }
-        console.log('Chrome path:', getChromePath());
-        console.log('Chrome exists:', fs.existsSync(getChromePath()));
-        "
+          console.log('Chrome path:', getChromePath());
+          console.log('Chrome exists:', fs.existsSync(getChromePath()));
+          "
 
-    - name: Test Chrome detection (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        node -e "
-        const fs = require('fs');
-        function getChromePath() {
-          return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-        }
-        console.log('Chrome path:', getChromePath());
-        console.log('Chrome exists:', fs.existsSync(getChromePath()));
-        "
+      - name: Test Chrome detection (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          node -e "
+          const fs = require('fs');
+          function getChromePath() {
+            const windowsPaths = [
+              process.env.LOCALAPPDATA + '\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe',
+              process.env.PROGRAMFILES + '\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe',
+              process.env['PROGRAMFILES(X86)'] + '\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe'
+            ];
+            for (const chromeExePath of windowsPaths) {
+              try {
+                if (fs.existsSync(chromeExePath)) {
+                  return chromeExePath;
+                }
+              } catch {}
+            }
+            return 'chrome.exe';
+          }
+          console.log('Chrome path:', getChromePath());
+          console.log('Chrome exists:', fs.existsSync(getChromePath()));
+          "
+
+      - name: Test Chrome detection (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          node -e "
+          const fs = require('fs');
+          function getChromePath() {
+            return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+          }
+          console.log('Chrome path:', getChromePath());
+          console.log('Chrome exists:', fs.existsSync(getChromePath()));
+          "
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Check file syntax
-      run: |
-        node -c playd
-        node -c test.js
+      - name: Check file syntax
+        run: |
+          node -c playd
+          node -c test.js
 
-    - name: Check for TODO/FIXME comments
-      run: |
-        if grep -r "TODO\|FIXME" playd test.js; then
-          echo "Warning: Found TODO/FIXME comments"
-          exit 0
-        fi
+      - name: Check for TODO/FIXME comments
+        run: |
+          if grep -r "TODO\|FIXME" playd test.js; then
+            echo "Warning: Found TODO/FIXME comments"
+            exit 0
+          fi
