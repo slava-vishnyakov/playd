@@ -1,0 +1,43 @@
+{
+  "name": "playd",
+  "version": "0.0.1",
+  "description": "Browser automation tool using Chrome DevTools Protocol",
+  "main": "playd",
+  "bin": {
+    "playd": "./playd"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "browser",
+    "automation",
+    "chrome",
+    "cdp",
+    "devtools",
+    "scraping",
+    "testing",
+    "cli"
+  ],
+  "author": "Slava Vishnyakov",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slava-vishnyakov/playd.git"
+  },
+  "homepage": "https://github.com/slava-vishnyakov/playd#readme",
+  "bugs": {
+    "url": "https://github.com/slava-vishnyakov/playd/issues"
+  },
+  "files": [
+    "playd",
+    "README.md",
+    "LICENSE"
+  ]
+}
