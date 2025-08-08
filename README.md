@@ -4,6 +4,8 @@
 
 Browser automation tool using the Chrome DevTools Protocol (CDP) for LLMs to use. (🚨 Strongly vibe-coded)
 
+[**Homepage**](https://slava-vishnyakov.github.io/playd/)
+
 ## Quickstart
 
 ```bash
