@@ -7,8 +7,7 @@
 // - Each "session" launches its own Chrome with a dedicated user-data-dir and remote-debugging-port.
 // - Commands: session create/ls/info/close, goto, click, type, fill, press, wait-for, dom, text, attr, screenshot, pdf, cookies, storage, eval, eval-file, status, shutdown.
 //
-// Assumes macOS Chrome at: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
-// (Adjust CHROME_PATH if needed.)
+// Auto-detects Chrome installation on macOS, Windows, and Linux.
 // Requires: Node >= 18 and npm package 'ws' (WebSocket). Install with: npm i -D ws
 
 const fs = require("node:fs");
@@ -23,7 +22,52 @@ const WebSocket = require("ws");
 ////////////////////////////////////////////////////////////////////////////////
 // Config
 ////////////////////////////////////////////////////////////////////////////////
-const CHROME_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+function getChromePath() {
+  const platform = process.platform;
+  
+  if (platform === "darwin") {
+    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  } else if (platform === "win32") {
+    // Common Windows paths for Chrome
+    const windowsPaths = [
+      process.env.LOCALAPPDATA + "\\Google\\Chrome\\Application\\chrome.exe",
+      process.env.PROGRAMFILES + "\\Google\\Chrome\\Application\\chrome.exe",
+      process.env["PROGRAMFILES(X86)"] + "\\Google\\Chrome\\Application\\chrome.exe"
+    ];
+    
+    for (const chromeExePath of windowsPaths) {
+      try {
+        if (fs.existsSync(chromeExePath)) {
+          return chromeExePath;
+        }
+      } catch {}
+    }
+    
+    // Fallback to PATH
+    return "chrome.exe";
+  } else {
+    // Linux and other Unix-like systems
+    const linuxPaths = [
+      "/usr/bin/google-chrome",
+      "/usr/bin/google-chrome-stable",
+      "/usr/bin/chromium",
+      "/usr/bin/chromium-browser",
+      "/snap/bin/chromium",
+      "/opt/google/chrome/chrome"
+    ];
+    
+    for (const chromePath of linuxPaths) {
+      try {
+        if (fs.existsSync(chromePath)) {
+          return chromePath;
+        }
+      } catch {}
+    }
+    
+    // Fallback to PATH
+    return "google-chrome";
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tiny arg parsing
@@ -612,7 +656,7 @@ async function serverMain(ep) {
     ];
     if (!headed) args.unshift("--headless=new", "--disable-gpu");
 
-    const chrome = cp.spawn(CHROME_PATH, args, { stdio: "ignore" });
+    const chrome = cp.spawn(getChromePath(), args, { stdio: "ignore" });
     chrome.on("exit", () => { /* cleaned elsewhere */ });
 
     // wait for /json/version to appear

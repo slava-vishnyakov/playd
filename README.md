@@ -11,10 +11,12 @@ playd session create my-run --headed
 
 playd goto https://example.com
 
-playd screenshot --path example.png
-
 playd llm "Does this page have an input for search and what's its ID?" 
 # uses gpt-5-nano and requires OPENAI_API_KEY
+
+playd screenshot --path example.png
+
+playd eval "body.html"
 
 playd shutdown
 ```
