@@ -42,13 +42,15 @@ Create and manage isolated browser sessions.
 
 ### Navigation
 
+Navigate and capture the page.
+
 ```bash
 playd goto <url>
 playd screenshot [--path file.png]
 playd pdf [--path file.pdf]
 ```
 
-Navigate and capture the page.
+`playd screenshot` works surprisingly well with Claude Code - it automatically "sees" the page.
 
 ### Page Interaction
 
@@ -73,17 +75,19 @@ playd eval-file <file.js>
 playd llm <question>
 ```
 
-Pull content, run JS, or ask an LLM about the current page (requires an API key; see **Environment**).
+Pull content, run JS, or ask an LLM about the current page (requires OPENAI_API_KEY env var).
 
 ### Data Management
 
 ```bash
 playd cookies [--set file.json]
+playd cookie-get <name>
+playd cookie-set <name> <value> [--domain <domain>] [--path <path>]
 playd storage [--export file.json]
 playd storage [--import file.json]
 ```
 
-Move cookies and Web Storage data in and out.
+Move cookies and Web Storage data in and out. Individual cookie commands make it easy to get/set specific cookies without dealing with JSON files.
 
 ### Server Control
 

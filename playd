@@ -378,9 +378,12 @@ Usage:
   playd screenshot [--session <id>] [--path out.png] [--full-page]
   playd pdf [--session <id>] [--path out.pdf] [--format A4] [--margin 10]
   playd cookies [--session <id>] [--set file.json]
+  playd cookie-get <name> [--session <id>]
+  playd cookie-set <name> <value> [--session <id>] [--domain <domain>] [--path <path>]
   playd storage [--session <id>] [--export file.json] [--import file.json]
   playd eval '<js>' [--session <id>]
   playd eval-file ./snippet.js [--session <id>]
+  playd llm '<question>' [--session <id>]
 
   playd status
   playd shutdown
@@ -564,6 +567,25 @@ Usage:
       return;
     }
 
+    case "cookie-get": {
+      const id = await needSession();
+      const name = a1; if (!name) { err("Usage: playd cookie-get <name>"); process.exit(2); }
+      const body = await call("GET", `/cookie-get?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
+      if (jsonMode) print(body, true); else print(body.value || "", false);
+      return;
+    }
+
+    case "cookie-set": {
+      const id = await needSession();
+      const name = a1; const value = a2;
+      if (!name || value == null) { err("Usage: playd cookie-set <name> <value> [--domain example.com] [--path /]"); process.exit(2); }
+      const domain = flags.domain || null;
+      const cookiePath = flags.path || "/";
+      const body = await call("POST", "/cookie-set", { id, name, value, domain, path: cookiePath });
+      print(body, jsonMode);
+      return;
+    }
+
     case "storage": {
       const id = await needSession();
       if (flags.export) {
@@ -662,8 +684,23 @@ async function serverMain(ep) {
     // wait for /json/version to appear
     await waitForJson(`http://127.0.0.1:${port}/json/version`, 10000);
 
-    // create a fresh page target
-    const pageWs = await openNewPageWs(port, "about:blank");
+    // use the existing initial tab instead of creating a new one
+    const tabsRes = await fetch(`http://127.0.0.1:${port}/json`);
+    if (!tabsRes.ok) throw new Error("Failed to get existing tabs");
+    const tabs = await tabsRes.json();
+    
+    // find the first page tab (usually the initial about:blank)
+    const initialTab = tabs.find(tab => tab.type === "page");
+    let pageWs;
+    
+    if (!initialTab) {
+      // fallback: create new tab if no existing tab found
+      pageWs = await openNewPageWs(port, "about:blank");
+    } else {
+      // use the existing tab
+      pageWs = initialTab.webSocketDebuggerUrl;
+    }
+    
     const cdp = new CDP(pageWs);
     await cdp.connect();
 
@@ -985,6 +1022,46 @@ async function serverMain(ep) {
       const s = await withSession(id);
       await s.cdp.send("Network.setCookies", { cookies });
       return reply(res, 200, { ok: true });
+    }
+
+    if (method === "GET" && url.pathname === "/cookie-get") {
+      const id = url.searchParams.get("id");
+      const name = url.searchParams.get("name");
+      if (!name) return reply(res, 400, { ok: false, error: "Missing cookie name" });
+      const s = await withSession(id);
+      const r = await s.cdp.send("Network.getCookies", {});
+      const cookie = (r.cookies || []).find(c => c.name === name);
+      return reply(res, 200, { ok: true, value: cookie ? cookie.value : null, cookie: cookie || null });
+    }
+
+    if (method === "POST" && url.pathname === "/cookie-set") {
+      const { id, name, value, domain, path = "/" } = await readJson(req);
+      if (!name) return reply(res, 400, { ok: false, error: "Missing cookie name" });
+      const s = await withSession(id);
+      
+      // Get current URL to determine domain if not specified
+      let cookieDomain = domain;
+      if (!cookieDomain) {
+        try {
+          const urlResult = await s.cdp.send("Runtime.evaluate", { expression: "location.hostname", returnByValue: true });
+          cookieDomain = urlResult.result.value;
+        } catch {
+          cookieDomain = "localhost";
+        }
+      }
+      
+      const cookie = {
+        name,
+        value: String(value),
+        domain: cookieDomain,
+        path: path || "/",
+        httpOnly: false,
+        secure: false,
+        sameSite: "Lax"
+      };
+      
+      await s.cdp.send("Network.setCookie", cookie);
+      return reply(res, 200, { ok: true, cookie });
     }
 
     if (method === "GET" && url.pathname === "/storage/export") {

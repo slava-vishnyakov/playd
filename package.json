@@ -1,6 +1,6 @@
 {
   "name": "playd",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Browser automation tool using Chrome DevTools Protocol",
   "main": "playd",
   "bin": {
