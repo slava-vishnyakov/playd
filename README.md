@@ -2,7 +2,9 @@
 
 [![Test](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml/badge.svg)](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml)
 
-Browser automation tool using the Chrome DevTools Protocol (CDP) for LLMs to use. (🚨 Strongly vibe-coded)
+Ever wanted to run a browser from CLI (command-line) and then command it from CLI? Or from LLM?  
+
+Here's the Chrome automation tool using the Chrome DevTools Protocol (CDP) for CLI and LLMs to use.
 
 [**Homepage**](https://slava-vishnyakov.github.io/playd/)
 
