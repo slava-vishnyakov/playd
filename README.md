@@ -1,5 +1,7 @@
 # playd
 
+[![Test](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml/badge.svg)](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml)
+
 Browser automation tool using the Chrome DevTools Protocol (CDP) for LLMs to use. (🚨 Strongly vibe-coded)
 
 ## Quickstart
