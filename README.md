@@ -1,12 +1,10 @@
 # playd
 
-[![Test](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml/badge.svg)](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml)
+[![Test](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml/badge.svg)](https://github.com/slava-vishnyakov/playd/actions/workflows/test.yml) [![Homepage](https://img.shields.io/badge/Homepage-visit-blue?style=flat&logo=github)](https://slava-vishnyakov.github.io/playd/)
 
 Ever wanted to run a browser from CLI (command-line) and then command it from CLI? Or from LLM?  
 
-Here's the Chrome automation tool using the Chrome DevTools Protocol (CDP) for CLI and LLMs to use. Kind of like "Browser Use" without MCP or extensions or puppeteer/playwright.
-
-[**Homepage**](https://slava-vishnyakov.github.io/playd/)
+Here's the Chrome automation tool using the Chrome DevTools Protocol (CDP) for CLI and LLMs to use. Kind of like "Browser Use" without MCP or extensions or puppeteer/playwright./clear
 
 ## Quickstart
 
