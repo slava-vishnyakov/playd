@@ -170,7 +170,52 @@ async function main() {
     }
   });
 
-  // Test 9: Clean up - shutdown server
+  // Test 9: Integration test - real Chrome session
+  await runner.run("Chrome integration test", async () => {
+    // Create a headless session for CI compatibility
+    const createResult = await runner.runCommand(["session", "create", "integration-test"]);
+    if (!createResult.stdout.includes('"ok":true')) {
+      throw new Error("Failed to create session");
+    }
+
+    try {
+      // Navigate to httpbin.org (reliable testing service)
+      const gotoResult = await runner.runCommand(["goto", "https://httpbin.org/html", "--session", "integration-test"]);
+      if (!gotoResult.stdout.includes('"ok":true')) {
+        throw new Error("Failed to navigate to httpbin");
+      }
+
+      // Check page content loaded (httpbin.org/html contains Herman Melville text)
+      const contentResult = await runner.runCommand(["eval", "document.body.textContent.includes('Herman Melville')", "--session", "integration-test"]);
+      if (!contentResult.stdout.includes("true")) {
+        throw new Error(`Expected page to contain 'Herman Melville', got: ${contentResult.stdout}`);
+      }
+
+      // Take a screenshot to verify page loaded
+      const screenshotResult = await runner.runCommand(["screenshot", "--session", "integration-test", "--json"]);
+      const screenshotData = JSON.parse(screenshotResult.stdout);
+      if (!screenshotData.ok || !screenshotData.base64) {
+        throw new Error("Screenshot failed or returned no data");
+      }
+
+      // Test cookie functionality (should work with httpbin.org domain)
+      const setCookieResult = await runner.runCommand(["cookie-set", "test", "value123", "--session", "integration-test"]);
+      if (!setCookieResult.stdout.includes('"ok":true')) {
+        throw new Error("Failed to set cookie");
+      }
+
+      const getCookieResult = await runner.runCommand(["cookie-get", "test", "--session", "integration-test"]);
+      if (!getCookieResult.stdout.includes("value123")) {
+        throw new Error(`Expected 'value123', got: ${getCookieResult.stdout}`);
+      }
+
+    } finally {
+      // Always clean up the session
+      await runner.runCommand(["session", "close", "integration-test"]);
+    }
+  });
+
+  // Test 10: Clean up - shutdown server
   await runner.run("Shutdown command", async () => {
     const result = await runner.runCommand(["shutdown"]);
     if (!result.stdout.includes("ok")) {

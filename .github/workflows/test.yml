@@ -33,6 +33,16 @@ jobs:
 
     - name: Run smoke tests
       run: node test.js
+      
+    - name: Display Chrome version
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          google-chrome --version || chromium --version || echo "Chrome not found"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version || echo "Chrome not found"
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          powershell -Command "& {if (Test-Path 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') { & 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' --version } else { 'Chrome not found' }}"
+        fi
 
     - name: Install Chrome (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
