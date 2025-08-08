@@ -188,6 +188,9 @@ async function main() {
       // Wait for page content to load
       await runner.runCommand(["wait-for", "body", "--session", "integration-test"]);
       
+      // Give page extra time to fully render
+      await runner.runCommand(["sleep", "1000", "--session", "integration-test"]);
+      
       // Check page content loaded (httpbin.org/html contains Herman Melville text)
       const contentResult = await runner.runCommand(["eval", "document.body.textContent.includes('Herman Melville')", "--session", "integration-test"]);
       if (!contentResult.stdout.includes("true")) {

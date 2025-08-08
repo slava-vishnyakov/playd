@@ -35,8 +35,8 @@ jobs:
       - name: Run smoke tests
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 10
-          max_attempts: 3
+          timeout_minutes: 3
+          max_attempts: 4
           command: node test.js
 
   lint:
