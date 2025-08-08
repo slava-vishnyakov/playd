@@ -1,6 +1,6 @@
 {
   "name": "playd",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Browser automation tool using Chrome DevTools Protocol",
   "main": "playd",
   "bin": {
@@ -37,6 +37,7 @@
   },
   "files": [
     "playd",
+    "test.js",
     "README.md",
     "LICENSE"
   ]
