@@ -116,13 +116,13 @@ playd llm "Does this page have a search input? What's its ID?"</code></pre>
     <p class="text-slate-300 mb-4">Press <kbd class="rounded bg-white/10 px-1">#</kbd> in Claude Code (or similar) and paste this line to store playd usage instructions:</p>
     <div class="relative">
         <button class="copy-btn absolute right-2 top-2 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs z-10" data-copy-target="#code-intro">Copy</button>
-        <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 pr-16 text-xs"><code id="code-intro" class="block whitespace-pre-wrap">Information about `playd` command: it controls Chrome via CDP; create session: `playd session create browser --headed` (other commands use last session by default); navigate: `playd goto URL`; interact: `playd click ".selector"`, `playd type ".selector" "text"`, `playd fill ".selector" "text"`; wait: `playd wait-for ".selector"`; extract: `playd text`, `playd dom`, `playd attr ".selector" "href"` (note that this is html attr, not current value for input!); AI questions: `playd llm "does this page have input and what is its id"` --on-html; (if on-html omitted - only text and title are analyzed) run JS: `playd eval "code"`; capture: `playd screenshot` (outputs image, works well for claude code). If user asks you to use browser - use playd. playd dom: dumps dom. playd text. playd cookie-get &lt;name>; playd cookie-set &lt;name> &lt;value> [--domain &lt;domain>] [--path &lt;path>]; playd storage [--export file.json] [--import file.json]; playd session close browser</code></pre>
+        <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 pr-16 text-xs"><code id="code-intro" class="block whitespace-pre-wrap">Information about `playd` command: it controls Chrome via CDP; create session: `playd session create browser1 --headed` (other commands use last session by default); navigate: `playd goto URL`; interact: `playd click ".selector"`, `playd type "text"` or `playd type "text" --selector ".input"`, `playd type "text" --clear` (clears first), `playd fill ".selector" "text"`, `playd press "Enter"`; wait: `playd wait-for ".selector"`; extract: `playd text`, `playd dom`, `playd attr ".selector" "href"` (html attr, not current value!); AI questions: `playd llm "question"` (analyzes title+text) or `playd llm "question" --on-html` (analyzes full HTML); run JS: `playd eval "code"`; capture: `playd screenshot`; cookies: `playd cookie-get &lt;name>`, `playd cookie-set &lt;name> &lt;value> [--domain &lt;domain>] [--path &lt;path>]`; storage: `playd storage [--export file.json] [--import file.json]`; `playd session close browser1`; `playd wait-for "textarea[name='q']"`; `playd help`; `playd shutdown` (closes all sessions)</code></pre>
     </div>
 </section>
 
 <!-- Examples -->
 <section class="mx-auto mt-12 max-w-7xl px-6" id="examples">
-    <h2 class="text-2xl font-bold">Examples</h2>
+    <h2 class="text-2xl font-bold">Manual Examples</h2>
     <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div class="rounded-2xl border border-white/10 bg-panel p-5">
             <h3 class="font-semibold">Open a page and summarize</h3>
@@ -139,8 +139,7 @@ playd session close demo
             <h3 class="font-semibold">Google</h3>
             <div class="relative mt-2">
                 <button class="copy-btn absolute right-2 top-2 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs" data-copy-target="#ex2">Copy</button>
-                <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 text-sm"><code id="ex2">
-playd session create browser1
+                <pre class="overflow-auto rounded-xl border border-white/10 bg-inksoft p-4 text-sm"><code id="ex2">playd session create browser1
 playd goto https://google.com
 playd wait-for "textarea[name='q']
 playd click "textarea[name='q']
