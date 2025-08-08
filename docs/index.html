@@ -44,10 +44,9 @@
     </nav>
 
     <div class="mx-auto max-w-4xl px-6 pb-10 pt-8 text-center sm:pt-16">
-        <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">CDP • Headless Chrome • LLM‑friendly CLI</span>
-        <h1 class="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-6xl">Chrome automation <span class="text-slate-300">for LLMs</span></h1>
+        <h1 class="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-6xl">Chrome automation<br><span class="text-slate-300">for LLMs or CLI</span></h1>
         <p class="mx-auto mt-4 max-w-2xl text-slate-300/90">
-            Script the browser from the command line and let your LLM do the rest.
+            No need for playwright/puppeteer.<br>Script the browser from the command line and let your LLM do the rest.
         </p>
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
             <a href="#quickstart" class="rounded-xl bg-sky-500 px-4 py-2.5 font-semibold text-ink hover:bg-sky-400">Get started</a>
@@ -56,28 +55,14 @@
     </div>
 </header>
 
-<!-- Feature cards -->
-<section class="mx-auto max-w-2xl px-6" id="features">
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
-        <div class="rounded-2xl border border-white/10 bg-panel p-5">
-            <h3 class="text-lg font-semibold">LLM‑friendly CLI</h3>
-            <p class="mt-1 text-sm text-slate-300/90">Automate browser from Claude Code or similar.</p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-panel p-5">
-            <h3 class="text-lg font-semibold">Optionally zero install</h3>
-            <p class="mt-1 text-sm text-slate-300/90">Use <span class="rounded bg-white/10 px-1">npx playd</span> to run the latest version without touching global state.</p>
-        </div>
-    </div>
-</section>
-
 <!-- Quickstart -->
 <section class="mx-auto mt-12 max-w-5xl px-6" id="quickstart">
     <div class="flex items-center justify-between gap-3 mb-6">
-        <h2 class="text-2xl font-bold">Quickstart with <span class="text-sky-400">npx</span></h2>
+        <h2 class="text-2xl font-bold">Quickstart with <span class="text-sky-400">CLI</span></h2>
         <span class="text-xs text-slate-400">Requires Node.js</span>
     </div>
 
-    <div class="space-y-6">
+    <div class="space-y-2">
         <!-- Step 1 -->
         <div>
             <div class="relative">
@@ -85,12 +70,13 @@
                 <pre class="rounded-xl border border-white/10 bg-inksoft p-4 pr-16 text-sm"><code id="code-session">npm install -g playd
 playd session create my-run --headed
 playd goto https://example.com
-playd llm "Does this page have a search input? What's its ID?"</code></pre>
+playd llm "Does this page have a search input? What's its ID?" --on-html
+<span class="text-slate-500"># npx -y playd <span class="text-slate-700">&nbsp;&larr; works too</span></span></code></pre>
             </div>
         </div>
 
         <!-- Optional Commands -->
-        <div class="border-t border-white/10 pt-6 space-y-4">
+        <div class="space-y-4">
             <div>
                 <p class="text-sm text-slate-300 mb-2"><span class="font-semibold">Required for llm command:</span> Set your OpenAI API key</p>
                 <div class="relative">
@@ -139,7 +125,7 @@ playd type "search"
 playd press Enter
 playd llm "what is this page about, summarize in 2-3 sentences"
 playd llm "what query was used" --on-html
-playd session close browser1
+playd shutdown # closes all sessions
 </code></pre>
             </div>
         </div>
